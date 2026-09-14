@@ -37,4 +37,17 @@ ENTRYPOINT ["python", "LeaStripper.py"]
 #docker build -t lea-stripper .
 #docker run --rm lea-stripper https://wol.jw.org/es/wol/d/r4/lp-s/2026401
 #
-#docker run --rm -v $(pwd):/tmp leastripper https://wol.jw.org/es/wol/d/r4/lp-s/2026401 --tmpdir /tmp --keeptmp
+#bash:
+#docker run -v $(pwd):/tmp \
+# --rm leastripper \
+# https://wol.jw.org/es/wol/d/r4/lp-s/2026401 \
+# --tmpdir /tmp \
+# --keeptmp
+#
+#win:
+#docker run --rm `
+#  -v "$(pwd):/tmp" `
+#  lea-stripper `
+#  "https://wol.jw.org/es/wol/d/r4/lp-s/2026401" `
+#  --tmpdir /tmp `
+#  --keeptmp
