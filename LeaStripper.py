@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
 def download_text(url):
-    #open headless Playwright chromium, to extract page.content() for processing
+    # open headless Playwright chromium, to extract page.content() for processing
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome",headless=True,args=["--disable-blink-features=AutomationControlled","--no-sandbox","--disable-dev-shm-usage",])
         context = browser.new_context(viewport={"width": 1920, "height": 1080},locale="es-ES",user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36 (KHTML, like Gecko) " "Chrome/140.0.0.0 Safari/537.36")
@@ -55,29 +55,36 @@ def cleandownload(dirtytext):
     return cleantext
 
 
-def search_text(text):
+def search_text(text:str, debug:bool=False):
     # Find occurrences of "(lea"
     # Match "(le[ae]" (case-insensitive) and continue until the next ')' or '.'
 
-    # pattern = re.compile(r'\((?:lea|lee)[^)]*\)', re.IGNORECASE)
-    pattern = re.compile(r'\(le[ae][^)]*\)', re.IGNORECASE)
-
+    pattern = re.compile(r'\(l[eé][ae][^)]*\)', re.IGNORECASE)
+    if debug: print(f"In search_text, text passed dump: {text} \n----END OF DUMP---")
     matches_found = False
     only_citations = []
     for i, match in enumerate(pattern.finditer(text), start=1):
+        # if we got here that means that pattern.finditer(text) found at
+        # least one iteration in the text of the pattern
         matches_found = True
         full_text = match.group()
-
-        # if pattern contains a ';' to include the all the text between ( and ) in the output, a ';' would indicate that there are multiple verses between ()
+        if debug: print(f"{i}: {full_text}")
+        if debug: print(f"{i}: {match}")
+        # if pattern contains a ';' to include the all the text between ( and ) in the output, a ';' would
+        # indicate that there are multiple verses between ()
         if ";" in full_text:
             ingredient = re.sub(r'^\(le[ae]\s*','',full_text[:-1],flags=re.IGNORECASE)
         else:
             ingredient = re.sub(r'^\(le[ae]\s*','',full_text[:-1],flags=re.IGNORECASE)
 
-        # once an instance of the pattern '(lea' is found search backwards for the first occurrence of a number followed by ". ¿", keep track of that number, output the number at the end with 'Parr #' appended
-        # preceding_text = text[:match.start()]
-        # parr_matches = list(re.finditer(r'(\d+)\.\s*¿', preceding_text))
-        # parr_number = parr_matches[-1].group(1) if parr_matches else "Unknown"
+        # once an instance of the pattern '(lea' is found search backwards for the first occurrence of a number
+        # followed by ". ¿", keep track of that number, output the number at the end with 'Parr #' appended
+        #todo
+        # logic if match contains no numbers, the needed verse most be contained some where else, most
+        # likely the needed verse would be the first one in ( ) right after the question to the paragraph. For
+        # now just continue if there are no digits.
+        if not re.search(r'\d', full_text):
+            continue
         # Everything before this match
         preceding_text = text[:match.start()]
 
@@ -90,9 +97,10 @@ def search_text(text):
         only_citations.append(ingredient)
     print("\n")
     print("-" * 20)
-    print(f"Found {len(only_citations)} citations, easy copy/paste")
+    print(f"Found {len(only_citations)} citations, sanitized for easy copy/paste to verse2image:")
     for x in only_citations:
-        print(x)
+        result = re.sub(r',\s*', '-', x)
+        print(result)
     if not matches_found:
         print("No matches found.")
 
@@ -132,7 +140,11 @@ def main():
             f.write(cleanedtext)
         print("Processed Matches")
         print("-" * 20)
-        search_text(cleanedtext)
+        #todo
+        # have search_text return a dic that can be iterated to be passed to verse2image, needed for
+        # integration into UI, change the printing to terminal to outputing to the label that of the UI as
+        # a progress indicator
+        search_text(cleanedtext, True)
         if not keeptmp:
             os.remove(temp_path2)
     except requests.exceptions.RequestException as e:
