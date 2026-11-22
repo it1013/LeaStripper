@@ -59,8 +59,9 @@ def search_text(text:str, debug:bool=False):
     # Find occurrences of "(lea"
     # Match "(le[ae]" (case-insensitive) and continue until the next ')' or '.'
 
-    pattern = re.compile(r'\(l[eé][ae][^)]*\)', re.IGNORECASE)
-    if debug: print(f"In search_text, text passed dump: {text} \n----END OF DUMP---")
+    #pattern = re.compile(r'\(l[eé][ae][^)]*\)', re.IGNORECASE)
+    pattern = re.compile(r'\((?:l[eé][ae][^)]*|[^)]*\bl[eé][ae]\s+[^)]*\d+:\d+[^)]*)\)', re.IGNORECASE)
+    #if debug: print(f"In search_text, text passed dump: {text} \n----END OF DUMP---")
     matches_found = False
     only_citations = []
     for i, match in enumerate(pattern.finditer(text), start=1):
@@ -82,7 +83,13 @@ def search_text(text:str, debug:bool=False):
         #todo
         # logic if match contains no numbers, the needed verse most be contained some where else, most
         # likely the needed verse would be the first one in ( ) right after the question to the paragraph. For
-        # now just continue if there are no digits.
+        # now just continue if there are no digits. Like in this example paragraph:
+        # : 7 Los siervos de Jehová contamos con herramientas que nos permiten superar las barreras lingüísticas.
+        # Predicamos unidos “buenas noticias eternas [...] a toda nación, tribu, lengua y pueblo” con la ayuda del
+        # “ángel” mencionado en Apocalipsis 14:6 (léelo). Al ver cómo se cumplen en nuestros tiempos profecías tan
+        # emocionantes como esta de Apocalipsis y la de Zacarías, nos convencemos de que las demás también se harán
+        # realidad y estamos aún más decididos a ser leales a la organización que Jehová utiliza para proclamar las
+        # buenas noticias.
         if not re.search(r'\d', full_text):
             continue
         # Everything before this match
@@ -144,7 +151,7 @@ def main():
         # have search_text return a dic that can be iterated to be passed to verse2image, needed for
         # integration into UI, change the printing to terminal to outputing to the label that of the UI as
         # a progress indicator
-        search_text(cleanedtext, True)
+        search_text(cleanedtext, False)
         if not keeptmp:
             os.remove(temp_path2)
     except requests.exceptions.RequestException as e:
